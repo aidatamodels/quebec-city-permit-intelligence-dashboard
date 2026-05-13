@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Québec City Permit Intelligence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --surface: #111827;
+      --surface-2: #172033;
+      --surface-3: #202b43;
+      --border: rgba(255,255,255,0.11);
+      --text: #f5f7fb;
+      --muted: #aab4c7;
+      --muted-2: #6f7c93;
+      --accent: #50e3a4;
+      --accent-2: #5bbcff;
+      --warn: #f7c948;
+      --danger: #ff6b7a;
+      --shadow: 0 18px 60px rgba(0,0,0,0.38);
+      --radius: 18px;
+      --sidebar: 380px;
+      --topbar: 72px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    .app {
+      height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar) 1fr;
+      grid-template-rows: var(--topbar) 1fr;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(11, 16, 32, 0.94);
+      backdrop-filter: blur(16px);
+      z-index: 1000;
+    }
+
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-dot {
+      width: 13px; height: 13px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 24px rgba(80, 227, 164, .8);
+    }
+    .brand-title { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
+    .brand-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+    .status-pill {
+      border: 1px solid rgba(80,227,164,.35);
+      color: var(--accent);
+      background: rgba(80,227,164,.1);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    aside {
+      border-right: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--surface), #0e1426);
+      overflow: auto;
+      padding: 18px;
+    }
+
+    main {
+      position: relative;
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 1fr 190px;
+      background: var(--bg);
+    }
+
+    .panel {
+      background: rgba(17, 24, 39, .85);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--muted-2);
+      font-weight: 800;
+      margin: 2px 0 12px;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 12px;
+      outline: none;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    select:focus { border-color: rgba(91,188,255,.75); }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .kpi {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+    .kpi .value { font-size: 24px; font-weight: 800; letter-spacing: -0.04em; }
+    .kpi .label { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .model-card { font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .model-name { color: var(--text); font-weight: 800; }
+    .badge {
+      display: inline-flex;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(91,188,255,.12);
+      border: 1px solid rgba(91,188,255,.25);
+      color: var(--accent-2);
+      font-weight: 800;
+      font-size: 11px;
+      margin-top: 8px;
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+      background: #101827;
+      z-index: 1;
+    }
+
+    .map-shell { position: relative; min-height: 0; overflow: hidden; }
+    .map-overlay {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      right: 18px;
+      z-index: 500;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+    .map-title-card {
+      max-width: 620px;
+      background: rgba(11,16,32,.83);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(14px);
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+      pointer-events: auto;
+    }
+    .map-title-card h1 { margin: 0; font-size: 26px; letter-spacing: -0.04em; }
+    .map-title-card p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+    .bottom {
+      border-top: 1px solid var(--border);
+      background: rgba(11,16,32,.95);
+      display: grid;
+      grid-template-columns: 1.2fr 1fr 1fr;
+      gap: 14px;
+      padding: 14px;
+      overflow: hidden;
+    }
+
+    .list { display: flex; flex-direction: column; gap: 7px; max-height: 122px; overflow: auto; padding-right: 4px; }
+    .list-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: var(--surface-2);
+      border: 1px solid rgba(255,255,255,.06);
+      font-size: 12px;
+    }
+    .list-row span:first-child { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .list-row span:last-child { font-weight: 800; color: var(--text); }
+
+    .leaflet-control-attribution { font-size: 10px; }
+
+    @media (max-width: 980px) {
+      body { overflow: auto; }
+      .app { display: block; height: auto; }
+      header { position: sticky; top: 0; min-height: var(--topbar); }
+      aside { border-right: none; border-bottom: 1px solid var(--border); }
+      main { height: 900px; grid-template-rows: 1fr auto; }
+      .bottom { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="brand-dot"></div>
+        <div>
+          <div class="brand-title">Québec City Permit Intelligence Dashboard</div>
+          <div class="brand-sub">Données ouvertes · IA prédictive · carte de concentration</div>
+        </div>
+      </div>
+      <div class="status-pill" id="statusPill">Chargement du JSON...</div>
+    </header>
+
+    <aside>
+      <div class="panel">
+        <div class="section-title">Paramètres</div>
+        <label for="yearFilter">Année</label>
+        <select id="yearFilter"></select>
+
+        <label for="monthFilter">Mois</label>
+        <select id="monthFilter"></select>
+
+        <label for="arrFilter">Arrondissement</label>
+        <select id="arrFilter"></select>
+
+        <label for="domainFilter">Domaine</label>
+        <select id="domainFilter"></select>
+
+        <label for="typeFilter">Type de permis</label>
+        <select id="typeFilter"></select>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">Indicateurs filtrés</div>
+        <div class="kpi-grid">
+          <div class="kpi"><div class="value" id="kpiPermits">—</div><div class="label">Permis agrégés</div></div>
+          <div class="kpi"><div class="value" id="kpiZones">—</div><div class="label">Zones cartographiques</div></div>
+          <div class="kpi"><div class="value" id="kpiArr">—</div><div class="label">Arrondissements</div></div>
+          <div class="kpi"><div class="value" id="kpiIntensity">—</div><div class="label">Max. par zone</div></div>
+        </div>
+      </div>
+
+      <div class="panel model-card">
+        <div class="section-title">Modèles IA</div>
+        <div>Classification du type de permis : <span class="model-name" id="classificationModel">—</span></div>
+        <div>Prévision du volume mensuel : <span class="model-name" id="forecastModel">—</span></div>
+        <div class="badge">Python + Scikit-learn</div>
+      </div>
+
+      <div class="panel note">
+        <div class="section-title">Sensibilité des données</div>
+        Le dashboard n’affiche pas les adresses exactes, les numéros de permis, les lots impactés ni les raisons détaillées. Les coordonnées sont arrondies pour réduire la précision spatiale et privilégier une lecture par zones de concentration.
+      </div>
+    </aside>
+
+    <main>
+      <section class="map-shell">
+        <div id="map"></div>
+        <div class="map-overlay">
+          <div class="map-title-card">
+            <h1>Carte des zones de concentration</h1>
+            <p>Visualisation agrégée des permis délivrés à la Ville de Québec selon les filtres sélectionnés.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bottom">
+        <div class="panel" style="margin:0; box-shadow:none;">
+          <div class="section-title">Top arrondissements</div>
+          <div class="list" id="topArrList"></div>
+        </div>
+        <div class="panel" style="margin:0; box-shadow:none;">
+          <div class="section-title">Top domaines</div>
+          <div class="list" id="topDomainList"></div>
+        </div>
+        <div class="panel" style="margin:0; box-shadow:none;">
+          <div class="section-title">Prévision mensuelle</div>
+          <div class="list" id="forecastList"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+  <script>
+    let dashboardData = null;
+    let map = null;
+    let heatLayer = null;
+    let circleLayer = null;
+
+    const els = {
+      status: document.getElementById('statusPill'),
+      year: document.getElementById('yearFilter'),
+      month: document.getElementById('monthFilter'),
+      arr: document.getElementById('arrFilter'),
+      domain: document.getElementById('domainFilter'),
+      type: document.getElementById('typeFilter'),
+      kpiPermits: document.getElementById('kpiPermits'),
+      kpiZones: document.getElementById('kpiZones'),
+      kpiArr: document.getElementById('kpiArr'),
+      kpiIntensity: document.getElementById('kpiIntensity'),
+      topArrList: document.getElementById('topArrList'),
+      topDomainList: document.getElementById('topDomainList'),
+      forecastList: document.getElementById('forecastList'),
+      classificationModel: document.getElementById('classificationModel'),
+      forecastModel: document.getElementById('forecastModel')
+    };
+
+    function fmt(n) { return new Intl.NumberFormat('fr-CA').format(n || 0); }
+
+    function fillSelect(select, values, allLabel) {
+      select.innerHTML = '';
+      const opt = document.createElement('option');
+      opt.value = 'ALL';
+      opt.textContent = allLabel;
+      select.appendChild(opt);
+      values.forEach(v => {
+        const o = document.createElement('option');
+        o.value = String(v);
+        o.textContent = String(v);
+        select.appendChild(o);
+      });
+    }
+
+    function initMap(center) {
+      map = L.map('map', { zoomControl: false }).setView([center.lat, center.lon], 11);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      circleLayer = L.layerGroup().addTo(map);
+    }
+
+    function getFilteredPoints() {
+      const y = els.year.value;
+      const m = els.month.value;
+      const a = els.arr.value;
+      const d = els.domain.value;
+      const t = els.type.value;
+
+      return dashboardData.map.points.filter(p => {
+        return (y === 'ALL' || String(p.annee) === y)
+          && (m === 'ALL' || String(p.mois) === m)
+          && (a === 'ALL' || p.arrondissement === a)
+          && (d === 'ALL' || p.domaine === d)
+          && (t === 'ALL' || p.type_permis === t);
+      });
+    }
+
+    function topFromPoints(points, key, limit = 6) {
+      const acc = new Map();
+      points.forEach(p => acc.set(p[key], (acc.get(p[key]) || 0) + p.count));
+      return Array.from(acc.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([label, count]) => ({ label, count }));
+    }
+
+    function renderList(container, items) {
+      container.innerHTML = '';
+      if (!items.length) {
+        container.innerHTML = '<div class="list-row"><span>Aucune donnée</span><span>0</span></div>';
+        return;
+      }
+      items.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'list-row';
+        row.innerHTML = `<span title="${item.label}">${item.label}</span><span>${fmt(item.count)}</span>`;
+        container.appendChild(row);
+      });
+    }
+
+    function updateDashboard() {
+      const points = getFilteredPoints();
+      const total = points.reduce((s, p) => s + p.count, 0);
+      const arrCount = new Set(points.map(p => p.arrondissement)).size;
+      const maxIntensity = points.length ? Math.max(...points.map(p => p.count)) : 0;
+
+      els.kpiPermits.textContent = fmt(total);
+      els.kpiZones.textContent = fmt(points.length);
+      els.kpiArr.textContent = fmt(arrCount);
+      els.kpiIntensity.textContent = fmt(maxIntensity);
+
+      renderList(els.topArrList, topFromPoints(points, 'arrondissement'));
+      renderList(els.topDomainList, topFromPoints(points, 'domaine'));
+
+      if (heatLayer) map.removeLayer(heatLayer);
+      circleLayer.clearLayers();
+
+      const heatData = points.map(p => [p.lat, p.lon, Math.max(1, p.count)]);
+      if (heatData.length && window.L.heatLayer) {
+        heatLayer = L.heatLayer(heatData, { radius: 28, blur: 26, maxZoom: 15 }).addTo(map);
+      }
+
+      const topCircles = [...points].sort((a, b) => b.count - a.count).slice(0, 120);
+      topCircles.forEach(p => {
+        const circle = L.circleMarker([p.lat, p.lon], {
+          radius: Math.min(18, 5 + Math.sqrt(p.count) * 2),
+          color: '#5bbcff',
+          weight: 1,
+          fillColor: '#50e3a4',
+          fillOpacity: 0.38
+        });
+        circle.bindPopup(`
+          <strong>${p.arrondissement}</strong><br>
+          Domaine : ${p.domaine}<br>
+          Type : ${p.type_permis}<br>
+          Période : ${p.annee}-${String(p.mois).padStart(2,'0')}<br>
+          Permis agrégés : ${p.count}<br>
+          <em>Données agrégées, sans adresse exacte.</em>
+        `);
+        circleLayer.addLayer(circle);
+      });
+    }
+
+    function renderForecast() {
+      const model = dashboardData.models.forecast_volume_mensuel;
+      els.forecastList.innerHTML = '';
+      if (!model || model.status !== 'trained') {
+        els.forecastList.innerHTML = '<div class="list-row"><span>Prévision indisponible</span><span>—</span></div>';
+        return;
+      }
+      model.forecast.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'list-row';
+        row.innerHTML = `<span>${item.period}</span><span>${fmt(item.predicted_count)}</span>`;
+        els.forecastList.appendChild(row);
+      });
+    }
+
+    function initControls() {
+      const opt = dashboardData.options;
+      fillSelect(els.year, opt.annees, 'Toutes les années');
+      fillSelect(els.month, opt.mois, 'Tous les mois');
+      fillSelect(els.arr, opt.arrondissements, 'Tous les arrondissements');
+      fillSelect(els.domain, opt.domaines, 'Tous les domaines');
+      fillSelect(els.type, opt.types_permis, 'Tous les types de permis');
+      [els.year, els.month, els.arr, els.domain, els.type].forEach(sel => sel.addEventListener('change', updateDashboard));
+    }
+
+    async function boot() {
+      try {
+        const response = await fetch('dashboard_data.json', { cache: 'no-store' });
+        if (!response.ok) throw new Error('dashboard_data.json introuvable');
+        dashboardData = await response.json();
+        els.status.textContent = 'Dashboard alimenté par dashboard_data.json';
+        initControls();
+        initMap(dashboardData.map.center);
+
+        const cls = dashboardData.models.classification_type_permis;
+        const fct = dashboardData.models.forecast_volume_mensuel;
+        els.classificationModel.textContent = cls?.best_model || 'Non entraîné';
+        els.forecastModel.textContent = fct?.best_model || 'Non entraîné';
+        renderForecast();
+        updateDashboard();
+      } catch (err) {
+        console.error(err);
+        els.status.textContent = 'Erreur de chargement du JSON';
+        alert('Impossible de charger dashboard_data.json. Lancez d’abord le script Python.');
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>
