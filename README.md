@@ -230,10 +230,17 @@ Les principales limites sont :
 - Ajouter des graphiques temporels interactifs ;
 - Publier le dashboard avec GitHub Pages.
 
-## Licence
+## Licence et source des données
 
 Le code source du projet est distribué sous licence MIT.
 
-Les données utilisées restent soumises aux conditions de leur source d’origine, notamment la licence Attribution Creative Commons 4.0 International (CC BY 4.0).
+Les données utilisées dans ce projet proviennent du portail Données Québec, la plateforme québécoise de diffusion de données ouvertes.
 
-Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+Jeu de données utilisé : `Permis délivrés à la Ville de Québec`  
+Organisation diffusant les données : Ville de Québec  
+Portail : [Données Québec](https://www.donneesquebec.ca/)  
+Licence des données : Attribution Creative Commons 4.0 International (CC BY 4.0)
+
+Les données demeurent soumises aux conditions de leur source d’origine. Le portail Données Québec indique que les jeux de données diffusés se voient attribuer une variante de la licence Creative Commons 4.0, la variante applicable étant précisée dans la fiche descriptive de chaque jeu de données. :contentReference[oaicite:0]{index=0}
+
+Voir le fichier [LICENSE](LICENSE) pour plus de détails sur la licence applicable au code source du projet.
