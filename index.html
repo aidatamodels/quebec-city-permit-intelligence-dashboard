@@ -3,117 +3,262 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Québec City Permit Intelligence Dashboard</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  >
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+
   <style>
     :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-2: #eef3f9;
+      --surface-3: #e5edf6;
+      --text: #162033;
+      --muted: #64748b;
+      --muted-2: #8a98aa;
+      --border: #d9e2ef;
+
+      --accent: #12b981;
+      --accent-dark: #0f8f69;
+      --blue: #2f80ed;
+      --blue-soft: rgba(47, 128, 237, 0.12);
+      --green-soft: rgba(18, 185, 129, 0.13);
+      --orange: #f59e0b;
+      --danger: #ef4444;
+
+      --shadow: 0 18px 42px rgba(25, 37, 64, 0.12);
+      --shadow-soft: 0 10px 28px rgba(25, 37, 64, 0.10);
+
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+
+      --sidebar: 360px;
+      --topbar: 74px;
+    }
+
+    body.dark-theme {
       --bg: #0b1020;
       --surface: #111827;
       --surface-2: #172033;
       --surface-3: #202b43;
-      --border: rgba(255,255,255,0.11);
       --text: #f5f7fb;
       --muted: #aab4c7;
-      --muted-2: #6f7c93;
-      --accent: #50e3a4;
-      --accent-2: #5bbcff;
-      --warn: #f7c948;
-      --danger: #ff6b7a;
+      --muted-2: #748198;
+      --border: rgba(255,255,255,0.11);
+
+      --blue-soft: rgba(91, 188, 255, 0.12);
+      --green-soft: rgba(80, 227, 164, 0.12);
+
       --shadow: 0 18px 60px rgba(0,0,0,0.38);
-      --radius: 18px;
-      --sidebar: 380px;
-      --topbar: 72px;
+      --shadow-soft: 0 10px 32px rgba(0,0,0,0.28);
     }
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; }
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
     body {
-      font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
       overflow: hidden;
     }
 
+    button,
+    select {
+      font-family: inherit;
+    }
+
     .app {
       height: 100vh;
       display: grid;
-      grid-template-columns: var(--sidebar) 1fr;
-      grid-template-rows: var(--topbar) 1fr;
+      grid-template-columns: var(--sidebar) minmax(0, 1fr);
+      grid-template-rows: var(--topbar) minmax(0, 1fr);
     }
 
     header {
       grid-column: 1 / -1;
+      height: var(--topbar);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 24px;
+      gap: 18px;
+      padding: 0 22px;
+      background: rgba(255,255,255,0.88);
       border-bottom: 1px solid var(--border);
-      background: rgba(11, 16, 32, 0.94);
-      backdrop-filter: blur(16px);
-      z-index: 1000;
+      backdrop-filter: blur(18px);
+      z-index: 1200;
     }
 
-    .brand { display: flex; align-items: center; gap: 14px; }
-    .brand-dot {
-      width: 13px; height: 13px; border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 24px rgba(80, 227, 164, .8);
+    body.dark-theme header {
+      background: rgba(11, 16, 32, 0.92);
     }
-    .brand-title { font-size: 17px; font-weight: 800; letter-spacing: -0.02em; }
-    .brand-sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--blue));
+      color: white;
+      font-weight: 900;
+      box-shadow: var(--shadow-soft);
+      flex: 0 0 auto;
+    }
+
+    .brand-title {
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .brand-subtitle {
+      margin-top: 3px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+    }
+
     .status-pill {
-      border: 1px solid rgba(80,227,164,.35);
-      color: var(--accent);
-      background: rgba(80,227,164,.1);
-      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid rgba(18, 185, 129, 0.35);
+      color: var(--accent-dark);
+      background: var(--green-soft);
+      padding: 9px 13px;
       border-radius: 999px;
       font-size: 12px;
-      font-weight: 700;
+      font-weight: 800;
       white-space: nowrap;
     }
 
+    body.dark-theme .status-pill {
+      color: #50e3a4;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: var(--shadow-soft);
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+    }
+
+    .icon-btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--blue);
+    }
+
     aside {
-      border-right: 1px solid var(--border);
-      background: linear-gradient(180deg, var(--surface), #0e1426);
-      overflow: auto;
+      min-height: 0;
+      overflow-y: auto;
       padding: 18px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
     }
 
     main {
-      position: relative;
       min-width: 0;
+      min-height: 0;
       display: grid;
-      grid-template-rows: 1fr 190px;
+      grid-template-rows: minmax(0, 1fr) auto;
       background: var(--bg);
     }
 
     .panel {
-      background: rgba(17, 24, 39, .85);
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-lg);
       padding: 16px;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-soft);
       margin-bottom: 14px;
     }
 
     .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 2px 0 13px;
       font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: .12em;
+      letter-spacing: 0.13em;
       color: var(--muted-2);
-      font-weight: 800;
-      margin: 2px 0 12px;
+      font-weight: 900;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 14px rgba(18,185,129,0.5);
+    }
+
+    .intro-text {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .filter-group {
+      margin-bottom: 12px;
     }
 
     label {
       display: block;
+      margin-bottom: 6px;
       color: var(--muted);
       font-size: 12px;
-      font-weight: 700;
-      margin-bottom: 6px;
+      font-weight: 800;
     }
 
     select {
@@ -122,56 +267,140 @@
       background: var(--surface-2);
       color: var(--text);
       padding: 11px 12px;
-      border-radius: 12px;
+      border-radius: var(--radius-sm);
       outline: none;
       font-size: 13px;
-      margin-bottom: 12px;
+      font-weight: 650;
+      cursor: pointer;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease;
     }
 
-    select:focus { border-color: rgba(91,188,255,.75); }
+    select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 4px var(--blue-soft);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .primary-btn {
+      color: white;
+      background: linear-gradient(135deg, var(--blue), var(--accent));
+      box-shadow: 0 12px 24px rgba(47, 128, 237, 0.22);
+    }
+
+    .secondary-btn {
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+    }
+
+    .primary-btn:hover,
+    .secondary-btn:hover {
+      transform: translateY(-1px);
+    }
 
     .kpi-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+
     .kpi {
       background: var(--surface-2);
       border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px;
+      border-radius: var(--radius-md);
+      padding: 13px;
+      min-width: 0;
     }
-    .kpi .value { font-size: 24px; font-weight: 800; letter-spacing: -0.04em; }
-    .kpi .label { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+    .kpi .value {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+
+    .kpi .label {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .model-card {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.65;
+    }
+
+    .model-name {
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      border: 1px solid rgba(47,128,237,0.26);
+      color: var(--blue);
+      font-weight: 900;
+      font-size: 11px;
+    }
 
     .note {
       font-size: 12px;
       color: var(--muted);
-      line-height: 1.55;
+      line-height: 1.6;
     }
 
-    .model-card { font-size: 12px; color: var(--muted); line-height: 1.6; }
-    .model-name { color: var(--text); font-weight: 800; }
-    .badge {
-      display: inline-flex;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(91,188,255,.12);
-      border: 1px solid rgba(91,188,255,.25);
-      color: var(--accent-2);
-      font-weight: 800;
-      font-size: 11px;
-      margin-top: 8px;
+    .map-shell {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      background: #dbe7f5;
     }
 
     #map {
       position: absolute;
       inset: 0;
-      background: #101827;
       z-index: 1;
+      background: #dbe7f5;
     }
 
-    .map-shell { position: relative; min-height: 0; overflow: hidden; }
+    .leaflet-container {
+      font-family: Inter, system-ui, sans-serif;
+      cursor: grab;
+    }
+
+    .leaflet-container:active {
+      cursor: grabbing;
+    }
+
+    .leaflet-interactive {
+      cursor: pointer;
+    }
+
     .map-overlay {
       position: absolute;
       top: 18px;
@@ -179,99 +408,506 @@
       right: 18px;
       z-index: 500;
       display: flex;
-      gap: 12px;
+      justify-content: space-between;
       align-items: flex-start;
+      gap: 14px;
       pointer-events: none;
     }
+
+    .map-title-card,
+    .map-legend {
+      pointer-events: auto;
+      background: rgba(255,255,255,0.90);
+      border: 1px solid rgba(217,226,239,0.92);
+      backdrop-filter: blur(16px);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    body.dark-theme .map-title-card,
+    body.dark-theme .map-legend {
+      background: rgba(11,16,32,0.86);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
     .map-title-card {
       max-width: 620px;
-      background: rgba(11,16,32,.83);
-      border: 1px solid var(--border);
-      backdrop-filter: blur(14px);
-      border-radius: 18px;
-      padding: 16px 18px;
-      box-shadow: var(--shadow);
-      pointer-events: auto;
+      padding: 17px 18px;
     }
-    .map-title-card h1 { margin: 0; font-size: 26px; letter-spacing: -0.04em; }
-    .map-title-card p { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+
+    .map-title-card h1 {
+      margin: 0;
+      font-size: 27px;
+      letter-spacing: -0.05em;
+      line-height: 1.05;
+    }
+
+    .map-title-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .map-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--accent-dark);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    body.dark-theme .map-hint {
+      color: #50e3a4;
+    }
+
+    .map-legend {
+      min-width: 188px;
+      padding: 13px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .legend-title {
+      color: var(--text);
+      font-weight: 900;
+      margin-bottom: 9px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 7px 0;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      flex: 0 0 auto;
+    }
 
     .bottom {
-      border-top: 1px solid var(--border);
-      background: rgba(11,16,32,.95);
       display: grid;
-      grid-template-columns: 1.2fr 1fr 1fr;
+      grid-template-columns: 1.18fr 1fr 1fr;
       gap: 14px;
       padding: 14px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      min-height: 202px;
+    }
+
+    .bottom .panel {
+      margin: 0;
+      box-shadow: var(--shadow-soft);
+      min-width: 0;
       overflow: hidden;
     }
 
-    .list { display: flex; flex-direction: column; gap: 7px; max-height: 122px; overflow: auto; padding-right: 4px; }
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 132px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
     .list-row {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: minmax(0, 1fr) auto;
       gap: 10px;
       align-items: center;
-      padding: 8px 10px;
-      border-radius: 12px;
+      padding: 9px 10px;
+      border-radius: 13px;
       background: var(--surface-2);
-      border: 1px solid rgba(255,255,255,.06);
+      border: 1px solid var(--border);
       font-size: 12px;
     }
-    .list-row span:first-child { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .list-row span:last-child { font-weight: 800; color: var(--text); }
 
-    .leaflet-control-attribution { font-size: 10px; }
+    .list-row span:first-child {
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 650;
+    }
 
-    @media (max-width: 980px) {
-      body { overflow: auto; }
-      .app { display: block; height: auto; }
-      header { position: sticky; top: 0; min-height: var(--topbar); }
-      aside { border-right: none; border-bottom: 1px solid var(--border); }
-      main { height: 900px; grid-template-rows: 1fr auto; }
-      .bottom { grid-template-columns: 1fr; }
+    .list-row span:last-child {
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    .leaflet-popup-content-wrapper,
+    .leaflet-popup-tip {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .leaflet-popup-content {
+      margin: 13px 15px;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .popup-title {
+      font-weight: 900;
+      font-size: 14px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .popup-meta {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .popup-count {
+      display: inline-flex;
+      margin-top: 9px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      background: var(--green-soft);
+      color: var(--accent-dark);
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    body.dark-theme .popup-count {
+      color: #50e3a4;
+    }
+
+    .leaflet-tooltip {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      box-shadow: var(--shadow-soft);
+      border-radius: 10px;
+      padding: 7px 9px;
+      font-family: Inter, system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 750;
+    }
+
+    .help-panel {
+      position: fixed;
+      top: 0;
+      right: -460px;
+      width: 440px;
+      max-width: calc(100vw - 28px);
+      height: 100vh;
+      z-index: 1600;
+      background: var(--surface);
+      color: var(--text);
+      border-left: 1px solid var(--border);
+      box-shadow: -12px 0 34px rgba(0,0,0,0.18);
+      transition: right 0.26s ease;
+      overflow-y: auto;
+    }
+
+    .help-panel.open {
+      right: 0;
+    }
+
+    .help-header {
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 2;
+    }
+
+    .help-header h2 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -0.04em;
+    }
+
+    .help-close {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .help-content {
+      padding: 20px;
+    }
+
+    .help-content section {
+      border-left: 3px solid var(--accent);
+      padding-left: 13px;
+      margin-bottom: 26px;
+    }
+
+    .help-content h3 {
+      margin: 0 0 9px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .help-content p,
+    .help-content li {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .help-content ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1500;
+      background: rgba(0,0,0,0.28);
+      display: none;
+    }
+
+    .overlay.open {
+      display: block;
+    }
+
+    @media (max-width: 1180px) {
+      :root {
+        --sidebar: 330px;
+      }
+
+      .map-title-card {
+        max-width: 520px;
+      }
+
+      .map-title-card h1 {
+        font-size: 24px;
+      }
+
+      .bottom {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .bottom .panel:first-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        display: block;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      header {
+        position: sticky;
+        top: 0;
+        height: auto;
+        min-height: var(--topbar);
+        align-items: flex-start;
+        padding: 12px 14px;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .brand-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 13px;
+      }
+
+      .brand-title {
+        white-space: normal;
+        font-size: 15px;
+      }
+
+      .brand-subtitle {
+        display: none;
+      }
+
+      .status-pill {
+        display: none;
+      }
+
+      aside {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding: 14px;
+      }
+
+      main {
+        display: block;
+      }
+
+      .map-shell {
+        height: 64vh;
+        min-height: 460px;
+      }
+
+      .map-overlay {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        flex-direction: column;
+      }
+
+      .map-title-card {
+        max-width: none;
+        width: 100%;
+        padding: 14px;
+      }
+
+      .map-title-card h1 {
+        font-size: 20px;
+      }
+
+      .map-title-card p {
+        font-size: 12px;
+      }
+
+      .map-legend {
+        display: none;
+      }
+
+      .bottom {
+        grid-template-columns: 1fr;
+        padding: 14px;
+      }
+
+      .list {
+        max-height: 190px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .header-actions {
+        gap: 7px;
+      }
+
+      .icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .map-shell {
+        height: 62vh;
+        min-height: 420px;
+      }
     }
   </style>
 </head>
+
 <body>
   <div class="app">
     <header>
       <div class="brand">
-        <div class="brand-dot"></div>
+        <div class="brand-icon">QC</div>
         <div>
           <div class="brand-title">Québec City Permit Intelligence Dashboard</div>
-          <div class="brand-sub">Données ouvertes · IA prédictive · carte de concentration</div>
+          <div class="brand-subtitle">Données ouvertes · IA prédictive · carte de concentration</div>
         </div>
       </div>
-      <div class="status-pill" id="statusPill">Chargement du JSON...</div>
+
+      <div class="header-actions">
+        <div class="status-pill" id="statusPill">Chargement du JSON...</div>
+        <button class="icon-btn" id="themeToggle" title="Changer le thème" aria-label="Changer le thème">☾</button>
+        <button class="icon-btn" id="helpToggle" title="À propos du dashboard" aria-label="À propos du dashboard">?</button>
+      </div>
     </header>
 
     <aside>
       <div class="panel">
+        <div class="section-title">Objectif</div>
+        <p class="intro-text">
+          Explorer les permis délivrés à la Ville de Québec, visualiser les zones de concentration
+          et estimer les tendances mensuelles à partir de données ouvertes.
+        </p>
+      </div>
+
+      <div class="panel">
         <div class="section-title">Paramètres</div>
-        <label for="yearFilter">Année</label>
-        <select id="yearFilter"></select>
 
-        <label for="monthFilter">Mois</label>
-        <select id="monthFilter"></select>
+        <div class="filter-group">
+          <label for="yearFilter">Année</label>
+          <select id="yearFilter"></select>
+        </div>
 
-        <label for="arrFilter">Arrondissement</label>
-        <select id="arrFilter"></select>
+        <div class="filter-group">
+          <label for="monthFilter">Mois</label>
+          <select id="monthFilter"></select>
+        </div>
 
-        <label for="domainFilter">Domaine</label>
-        <select id="domainFilter"></select>
+        <div class="filter-group">
+          <label for="arrFilter">Arrondissement</label>
+          <select id="arrFilter"></select>
+        </div>
 
-        <label for="typeFilter">Type de permis</label>
-        <select id="typeFilter"></select>
+        <div class="filter-group">
+          <label for="domainFilter">Domaine</label>
+          <select id="domainFilter"></select>
+        </div>
+
+        <div class="filter-group">
+          <label for="typeFilter">Type de permis</label>
+          <select id="typeFilter"></select>
+        </div>
+
+        <div class="button-row">
+          <button class="secondary-btn" id="resetFilters">Réinitialiser les filtres</button>
+        </div>
       </div>
 
       <div class="panel">
         <div class="section-title">Indicateurs filtrés</div>
         <div class="kpi-grid">
-          <div class="kpi"><div class="value" id="kpiPermits">—</div><div class="label">Permis agrégés</div></div>
-          <div class="kpi"><div class="value" id="kpiZones">—</div><div class="label">Zones cartographiques</div></div>
-          <div class="kpi"><div class="value" id="kpiArr">—</div><div class="label">Arrondissements</div></div>
-          <div class="kpi"><div class="value" id="kpiIntensity">—</div><div class="label">Max. par zone</div></div>
+          <div class="kpi">
+            <div class="value" id="kpiPermits">—</div>
+            <div class="label">Permis agrégés</div>
+          </div>
+
+          <div class="kpi">
+            <div class="value" id="kpiZones">—</div>
+            <div class="label">Zones cartographiques</div>
+          </div>
+
+          <div class="kpi">
+            <div class="value" id="kpiArr">—</div>
+            <div class="label">Arrondissements</div>
+          </div>
+
+          <div class="kpi">
+            <div class="value" id="kpiIntensity">—</div>
+            <div class="label">Max. par zone</div>
+          </div>
         </div>
       </div>
 
@@ -284,31 +920,55 @@
 
       <div class="panel note">
         <div class="section-title">Sensibilité des données</div>
-        Le dashboard n’affiche pas les adresses exactes, les numéros de permis, les lots impactés ni les raisons détaillées. Les coordonnées sont arrondies pour réduire la précision spatiale et privilégier une lecture par zones de concentration.
+        Le dashboard n’affiche pas les adresses exactes, les numéros de permis, les lots impactés
+        ni les raisons détaillées. Les coordonnées sont arrondies afin de réduire la précision spatiale
+        et de privilégier une lecture par zones de concentration.
       </div>
     </aside>
 
     <main>
       <section class="map-shell">
         <div id="map"></div>
+
         <div class="map-overlay">
           <div class="map-title-card">
             <h1>Carte des zones de concentration</h1>
-            <p>Visualisation agrégée des permis délivrés à la Ville de Québec selon les filtres sélectionnés.</p>
+            <p>
+              Visualisation agrégée des permis délivrés à la Ville de Québec selon les filtres sélectionnés.
+            </p>
+            <div class="map-hint">Survolez un point pour voir le détail · Cliquez pour ouvrir la fiche</div>
+          </div>
+
+          <div class="map-legend">
+            <div class="legend-title">Lecture de la carte</div>
+            <div class="legend-row">
+              <span class="legend-dot" style="background:#12b981"></span>
+              <span>Zone agrégée</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-dot" style="background:#2f80ed"></span>
+              <span>Contour interactif</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-dot" style="background:#f59e0b"></span>
+              <span>Survol actif</span>
+            </div>
           </div>
         </div>
       </section>
 
       <section class="bottom">
-        <div class="panel" style="margin:0; box-shadow:none;">
+        <div class="panel">
           <div class="section-title">Top arrondissements</div>
           <div class="list" id="topArrList"></div>
         </div>
-        <div class="panel" style="margin:0; box-shadow:none;">
+
+        <div class="panel">
           <div class="section-title">Top domaines</div>
           <div class="list" id="topDomainList"></div>
         </div>
-        <div class="panel" style="margin:0; box-shadow:none;">
+
+        <div class="panel">
           <div class="section-title">Prévision mensuelle</div>
           <div class="list" id="forecastList"></div>
         </div>
@@ -316,8 +976,58 @@
     </main>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <div class="overlay" id="overlay"></div>
+
+  <aside class="help-panel" id="helpPanel">
+    <div class="help-header">
+      <h2>À propos du dashboard</h2>
+      <button class="help-close" id="closeHelp" aria-label="Fermer">×</button>
+    </div>
+
+    <div class="help-content">
+      <section>
+        <h3>Objectif</h3>
+        <p>
+          Ce dashboard permet d’explorer les permis délivrés à la Ville de Québec,
+          de visualiser les zones de concentration et d’analyser les tendances selon les filtres sélectionnés.
+        </p>
+      </section>
+
+      <section>
+        <h3>Comment utiliser la carte</h3>
+        <ul>
+          <li>Utilisez les filtres dans le panneau de gauche.</li>
+          <li>Déplacez-vous et zoomez sur la carte.</li>
+          <li>Survolez un point pour obtenir un aperçu rapide.</li>
+          <li>Cliquez sur un point pour ouvrir une fiche détaillée.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h3>Approche de données</h3>
+        <p>
+          Les données affichées sont agrégées. Le dashboard évite d’exposer les adresses exactes
+          et privilégie une représentation par zones afin de préserver une lecture plus responsable.
+        </p>
+      </section>
+
+      <section>
+        <h3>Modèles</h3>
+        <p>
+          Le projet utilise Python et Scikit-learn pour préparer les données, entraîner les modèles
+          et générer le fichier <code>dashboard_data.json</code> utilisé par cette page.
+        </p>
+      </section>
+    </div>
+  </aside>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    crossorigin="">
+  </script>
+
   <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+
   <script>
     let dashboardData = null;
     let map = null;
@@ -325,175 +1035,371 @@
     let circleLayer = null;
 
     const els = {
-      status: document.getElementById('statusPill'),
-      year: document.getElementById('yearFilter'),
-      month: document.getElementById('monthFilter'),
-      arr: document.getElementById('arrFilter'),
-      domain: document.getElementById('domainFilter'),
-      type: document.getElementById('typeFilter'),
-      kpiPermits: document.getElementById('kpiPermits'),
-      kpiZones: document.getElementById('kpiZones'),
-      kpiArr: document.getElementById('kpiArr'),
-      kpiIntensity: document.getElementById('kpiIntensity'),
-      topArrList: document.getElementById('topArrList'),
-      topDomainList: document.getElementById('topDomainList'),
-      forecastList: document.getElementById('forecastList'),
-      classificationModel: document.getElementById('classificationModel'),
-      forecastModel: document.getElementById('forecastModel')
+      status: document.getElementById("statusPill"),
+      year: document.getElementById("yearFilter"),
+      month: document.getElementById("monthFilter"),
+      arr: document.getElementById("arrFilter"),
+      domain: document.getElementById("domainFilter"),
+      type: document.getElementById("typeFilter"),
+      resetFilters: document.getElementById("resetFilters"),
+      kpiPermits: document.getElementById("kpiPermits"),
+      kpiZones: document.getElementById("kpiZones"),
+      kpiArr: document.getElementById("kpiArr"),
+      kpiIntensity: document.getElementById("kpiIntensity"),
+      topArrList: document.getElementById("topArrList"),
+      topDomainList: document.getElementById("topDomainList"),
+      forecastList: document.getElementById("forecastList"),
+      classificationModel: document.getElementById("classificationModel"),
+      forecastModel: document.getElementById("forecastModel"),
+      themeToggle: document.getElementById("themeToggle"),
+      helpToggle: document.getElementById("helpToggle"),
+      helpPanel: document.getElementById("helpPanel"),
+      closeHelp: document.getElementById("closeHelp"),
+      overlay: document.getElementById("overlay")
     };
 
-    function fmt(n) { return new Intl.NumberFormat('fr-CA').format(n || 0); }
+    function fmt(value) {
+      return new Intl.NumberFormat("fr-CA").format(Number(value || 0));
+    }
+
+    function safeText(value) {
+      if (value === null || value === undefined || value === "") {
+        return "Non précisé";
+      }
+      return String(value);
+    }
 
     function fillSelect(select, values, allLabel) {
-      select.innerHTML = '';
-      const opt = document.createElement('option');
-      opt.value = 'ALL';
-      opt.textContent = allLabel;
-      select.appendChild(opt);
-      values.forEach(v => {
-        const o = document.createElement('option');
-        o.value = String(v);
-        o.textContent = String(v);
-        select.appendChild(o);
+      select.innerHTML = "";
+
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "ALL";
+      defaultOption.textContent = allLabel;
+      select.appendChild(defaultOption);
+
+      values.forEach(value => {
+        const option = document.createElement("option");
+        option.value = String(value);
+        option.textContent = String(value);
+        select.appendChild(option);
       });
     }
 
     function initMap(center) {
-      map = L.map('map', { zoomControl: false }).setView([center.lat, center.lon], 11);
-      L.control.zoom({ position: 'bottomright' }).addTo(map);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      map = L.map("map", {
+        zoomControl: false,
+        preferCanvas: true
+      }).setView([center.lat, center.lon], 11);
+
+      L.control.zoom({ position: "bottomright" }).addTo(map);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 18,
-        attribution: '&copy; OpenStreetMap contributors'
+        attribution: "&copy; OpenStreetMap contributors"
       }).addTo(map);
+
       circleLayer = L.layerGroup().addTo(map);
+
+      map.on("mousedown", () => {
+        map.getContainer().style.cursor = "grabbing";
+      });
+
+      map.on("mouseup", () => {
+        map.getContainer().style.cursor = "grab";
+      });
     }
 
     function getFilteredPoints() {
-      const y = els.year.value;
-      const m = els.month.value;
-      const a = els.arr.value;
-      const d = els.domain.value;
-      const t = els.type.value;
+      const year = els.year.value;
+      const month = els.month.value;
+      const arrondissement = els.arr.value;
+      const domain = els.domain.value;
+      const type = els.type.value;
 
-      return dashboardData.map.points.filter(p => {
-        return (y === 'ALL' || String(p.annee) === y)
-          && (m === 'ALL' || String(p.mois) === m)
-          && (a === 'ALL' || p.arrondissement === a)
-          && (d === 'ALL' || p.domaine === d)
-          && (t === 'ALL' || p.type_permis === t);
+      return dashboardData.map.points.filter(point => {
+        return (year === "ALL" || String(point.annee) === year)
+          && (month === "ALL" || String(point.mois) === month)
+          && (arrondissement === "ALL" || point.arrondissement === arrondissement)
+          && (domain === "ALL" || point.domaine === domain)
+          && (type === "ALL" || point.type_permis === type);
       });
     }
 
     function topFromPoints(points, key, limit = 6) {
-      const acc = new Map();
-      points.forEach(p => acc.set(p[key], (acc.get(p[key]) || 0) + p.count));
-      return Array.from(acc.entries())
+      const accumulator = new Map();
+
+      points.forEach(point => {
+        const label = safeText(point[key]);
+        accumulator.set(label, (accumulator.get(label) || 0) + Number(point.count || 0));
+      });
+
+      return Array.from(accumulator.entries())
         .sort((a, b) => b[1] - a[1])
         .slice(0, limit)
         .map(([label, count]) => ({ label, count }));
     }
 
     function renderList(container, items) {
-      container.innerHTML = '';
+      container.innerHTML = "";
+
       if (!items.length) {
-        container.innerHTML = '<div class="list-row"><span>Aucune donnée</span><span>0</span></div>';
+        container.innerHTML = `
+          <div class="list-row">
+            <span>Aucune donnée</span>
+            <span>0</span>
+          </div>
+        `;
         return;
       }
+
       items.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'list-row';
-        row.innerHTML = `<span title="${item.label}">${item.label}</span><span>${fmt(item.count)}</span>`;
+        const row = document.createElement("div");
+        row.className = "list-row";
+        row.innerHTML = `
+          <span title="${item.label}">${item.label}</span>
+          <span>${fmt(item.count)}</span>
+        `;
         container.appendChild(row);
       });
     }
 
+    function renderForecast() {
+      const model = dashboardData.models.forecast_volume_mensuel;
+      els.forecastList.innerHTML = "";
+
+      if (!model || model.status !== "trained" || !Array.isArray(model.forecast)) {
+        els.forecastList.innerHTML = `
+          <div class="list-row">
+            <span>Prévision indisponible</span>
+            <span>—</span>
+          </div>
+        `;
+        return;
+      }
+
+      model.forecast.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "list-row";
+        row.innerHTML = `
+          <span>${safeText(item.period)}</span>
+          <span>${fmt(item.predicted_count)}</span>
+        `;
+        els.forecastList.appendChild(row);
+      });
+    }
+
+    function getCircleRadius(count) {
+      return Math.min(22, 5 + Math.sqrt(Number(count || 0)) * 2);
+    }
+
+    function updateMap(points) {
+      if (heatLayer) {
+        map.removeLayer(heatLayer);
+        heatLayer = null;
+      }
+
+      circleLayer.clearLayers();
+
+      const heatData = points.map(point => [
+        point.lat,
+        point.lon,
+        Math.max(1, Number(point.count || 0))
+      ]);
+
+      if (heatData.length && window.L.heatLayer) {
+        heatLayer = L.heatLayer(heatData, {
+          radius: 28,
+          blur: 25,
+          maxZoom: 15,
+          minOpacity: 0.25
+        }).addTo(map);
+      }
+
+      const topCircles = [...points]
+        .sort((a, b) => Number(b.count || 0) - Number(a.count || 0))
+        .slice(0, 140);
+
+      topCircles.forEach(point => {
+        const baseRadius = getCircleRadius(point.count);
+
+        const circle = L.circleMarker([point.lat, point.lon], {
+          radius: baseRadius,
+          color: "#2f80ed",
+          weight: 2,
+          fillColor: "#12b981",
+          fillOpacity: 0.42,
+          opacity: 0.95,
+          interactive: true
+        });
+
+        circle.bindTooltip(
+          `${safeText(point.arrondissement)} · ${fmt(point.count)} permis`,
+          {
+            direction: "top",
+            offset: [0, -8],
+            opacity: 0.96
+          }
+        );
+
+        circle.bindPopup(`
+          <div class="popup-title">${safeText(point.arrondissement)}</div>
+          <div class="popup-meta">
+            Domaine : ${safeText(point.domaine)}<br>
+            Type : ${safeText(point.type_permis)}<br>
+            Période : ${safeText(point.annee)}-${String(point.mois).padStart(2, "0")}<br>
+            Données agrégées, sans adresse exacte.
+          </div>
+          <div class="popup-count">${fmt(point.count)} permis agrégés</div>
+        `);
+
+        circle.on("mouseover", function () {
+          this.setStyle({
+            radius: baseRadius + 4,
+            color: "#f59e0b",
+            weight: 3,
+            fillColor: "#f59e0b",
+            fillOpacity: 0.72
+          });
+
+          this.bringToFront();
+
+          if (this.getElement()) {
+            this.getElement().style.cursor = "pointer";
+          }
+        });
+
+        circle.on("mouseout", function () {
+          this.setStyle({
+            radius: baseRadius,
+            color: "#2f80ed",
+            weight: 2,
+            fillColor: "#12b981",
+            fillOpacity: 0.42
+          });
+        });
+
+        circleLayer.addLayer(circle);
+      });
+
+      if (points.length > 0) {
+        const bounds = L.latLngBounds(points.map(point => [point.lat, point.lon]));
+
+        if (bounds.isValid()) {
+          map.fitBounds(bounds, {
+            padding: [42, 42],
+            maxZoom: 12
+          });
+        }
+      }
+
+      setTimeout(() => map.invalidateSize(), 120);
+    }
+
     function updateDashboard() {
       const points = getFilteredPoints();
-      const total = points.reduce((s, p) => s + p.count, 0);
-      const arrCount = new Set(points.map(p => p.arrondissement)).size;
-      const maxIntensity = points.length ? Math.max(...points.map(p => p.count)) : 0;
+
+      const total = points.reduce((sum, point) => sum + Number(point.count || 0), 0);
+      const arrCount = new Set(points.map(point => point.arrondissement)).size;
+      const maxIntensity = points.length
+        ? Math.max(...points.map(point => Number(point.count || 0)))
+        : 0;
 
       els.kpiPermits.textContent = fmt(total);
       els.kpiZones.textContent = fmt(points.length);
       els.kpiArr.textContent = fmt(arrCount);
       els.kpiIntensity.textContent = fmt(maxIntensity);
 
-      renderList(els.topArrList, topFromPoints(points, 'arrondissement'));
-      renderList(els.topDomainList, topFromPoints(points, 'domaine'));
+      renderList(els.topArrList, topFromPoints(points, "arrondissement"));
+      renderList(els.topDomainList, topFromPoints(points, "domaine"));
 
-      if (heatLayer) map.removeLayer(heatLayer);
-      circleLayer.clearLayers();
-
-      const heatData = points.map(p => [p.lat, p.lon, Math.max(1, p.count)]);
-      if (heatData.length && window.L.heatLayer) {
-        heatLayer = L.heatLayer(heatData, { radius: 28, blur: 26, maxZoom: 15 }).addTo(map);
-      }
-
-      const topCircles = [...points].sort((a, b) => b.count - a.count).slice(0, 120);
-      topCircles.forEach(p => {
-        const circle = L.circleMarker([p.lat, p.lon], {
-          radius: Math.min(18, 5 + Math.sqrt(p.count) * 2),
-          color: '#5bbcff',
-          weight: 1,
-          fillColor: '#50e3a4',
-          fillOpacity: 0.38
-        });
-        circle.bindPopup(`
-          <strong>${p.arrondissement}</strong><br>
-          Domaine : ${p.domaine}<br>
-          Type : ${p.type_permis}<br>
-          Période : ${p.annee}-${String(p.mois).padStart(2,'0')}<br>
-          Permis agrégés : ${p.count}<br>
-          <em>Données agrégées, sans adresse exacte.</em>
-        `);
-        circleLayer.addLayer(circle);
-      });
-    }
-
-    function renderForecast() {
-      const model = dashboardData.models.forecast_volume_mensuel;
-      els.forecastList.innerHTML = '';
-      if (!model || model.status !== 'trained') {
-        els.forecastList.innerHTML = '<div class="list-row"><span>Prévision indisponible</span><span>—</span></div>';
-        return;
-      }
-      model.forecast.forEach(item => {
-        const row = document.createElement('div');
-        row.className = 'list-row';
-        row.innerHTML = `<span>${item.period}</span><span>${fmt(item.predicted_count)}</span>`;
-        els.forecastList.appendChild(row);
-      });
+      updateMap(points);
     }
 
     function initControls() {
-      const opt = dashboardData.options;
-      fillSelect(els.year, opt.annees, 'Toutes les années');
-      fillSelect(els.month, opt.mois, 'Tous les mois');
-      fillSelect(els.arr, opt.arrondissements, 'Tous les arrondissements');
-      fillSelect(els.domain, opt.domaines, 'Tous les domaines');
-      fillSelect(els.type, opt.types_permis, 'Tous les types de permis');
-      [els.year, els.month, els.arr, els.domain, els.type].forEach(sel => sel.addEventListener('change', updateDashboard));
+      const options = dashboardData.options;
+
+      fillSelect(els.year, options.annees, "Toutes les années");
+      fillSelect(els.month, options.mois, "Tous les mois");
+      fillSelect(els.arr, options.arrondissements, "Tous les arrondissements");
+      fillSelect(els.domain, options.domaines, "Tous les domaines");
+      fillSelect(els.type, options.types_permis, "Tous les types de permis");
+
+      [els.year, els.month, els.arr, els.domain, els.type].forEach(select => {
+        select.addEventListener("change", updateDashboard);
+      });
+
+      els.resetFilters.addEventListener("click", () => {
+        els.year.value = "ALL";
+        els.month.value = "ALL";
+        els.arr.value = "ALL";
+        els.domain.value = "ALL";
+        els.type.value = "ALL";
+        updateDashboard();
+      });
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark-theme");
+
+      const isDark = document.body.classList.contains("dark-theme");
+      els.themeToggle.textContent = isDark ? "☀" : "☾";
+
+      setTimeout(() => {
+        if (map) map.invalidateSize();
+      }, 120);
+    }
+
+    function openHelp() {
+      els.helpPanel.classList.add("open");
+      els.overlay.classList.add("open");
+    }
+
+    function closeHelp() {
+      els.helpPanel.classList.remove("open");
+      els.overlay.classList.remove("open");
+    }
+
+    function initHelpAndTheme() {
+      els.themeToggle.addEventListener("click", toggleTheme);
+      els.helpToggle.addEventListener("click", openHelp);
+      els.closeHelp.addEventListener("click", closeHelp);
+      els.overlay.addEventListener("click", closeHelp);
     }
 
     async function boot() {
       try {
-        const response = await fetch('dashboard_data.json', { cache: 'no-store' });
-        if (!response.ok) throw new Error('dashboard_data.json introuvable');
+        initHelpAndTheme();
+
+        const response = await fetch("dashboard_data.json", { cache: "no-store" });
+
+        if (!response.ok) {
+          throw new Error("dashboard_data.json introuvable");
+        }
+
         dashboardData = await response.json();
-        els.status.textContent = 'Dashboard alimenté par dashboard_data.json';
+
+        els.status.textContent = "Dashboard alimenté par dashboard_data.json";
+
         initControls();
         initMap(dashboardData.map.center);
 
-        const cls = dashboardData.models.classification_type_permis;
-        const fct = dashboardData.models.forecast_volume_mensuel;
-        els.classificationModel.textContent = cls?.best_model || 'Non entraîné';
-        els.forecastModel.textContent = fct?.best_model || 'Non entraîné';
+        const classificationModel = dashboardData.models.classification_type_permis;
+        const forecastModel = dashboardData.models.forecast_volume_mensuel;
+
+        els.classificationModel.textContent = classificationModel?.best_model || "Non entraîné";
+        els.forecastModel.textContent = forecastModel?.best_model || "Non entraîné";
+
         renderForecast();
         updateDashboard();
-      } catch (err) {
-        console.error(err);
-        els.status.textContent = 'Erreur de chargement du JSON';
-        alert('Impossible de charger dashboard_data.json. Lancez d’abord le script Python.');
+
+      } catch (error) {
+        console.error(error);
+        els.status.textContent = "Erreur de chargement du JSON";
+
+        alert(
+          "Impossible de charger dashboard_data.json. " +
+          "Vérifiez que le fichier est présent ou relancez le script Python."
+        );
       }
     }
 
